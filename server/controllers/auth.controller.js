@@ -38,7 +38,7 @@ export const signup = async ( req , res) => {
         fullName,
         email,
         username,
-        password: hashedPassword
+        password: hashedPassword,
     })
     
    if(newUser){
@@ -50,6 +50,7 @@ export const signup = async ( req , res) => {
             fullName: newUser.fullName,
             email: newUser.email,
             username: newUser.username,
+            role: newUser.role,
      })
    }
    else{
@@ -88,7 +89,9 @@ export const login = async( req , res ) => {
         id: existingEmail.id,
         fullName: existingEmail.fullName,
         email: existingEmail.email,
-        username: existingEmail.username
+        username: existingEmail.username,
+        role: existingEmail.role,
+        
     })
     } catch (error) {
         console.log("Error in login controller", error.message);
