@@ -6,23 +6,23 @@ import { getAnalyticsData, getDailySalesData } from "../controllers/analytics.co
 const router = express.Router();
 
 router.get("/", protectRoute, adminRoute, async (req, res) => {
+    try {
+        const analyticsData = await getAnalyticsData();
 
-	try {
-        const analyticsData = await getAnalyticsData()
+        const endDate = new Date();
+        const startDate = new Date(endDate.getTime() - 7 * 24 * 60 * 60 * 1000); // 7 days ago
 
-    const endDate = new Date() 
-    const startDate = new Date(endDate.getTime() - 7 * 24 * 60 * 60 * 1000) // 7 days ago
+        const dailySalesData = await getDailySalesData(startDate, endDate);
 
-    const dailySalesData = await getDailySalesData(startDate , endDate)
-
-    res.json({
-        analyticsData,
-        dailySalesData
-    })
+        res.json({
+            analyticsData,
+            dailySalesData,
+        });
     } catch (error) {
-        console.log("Error in analystics route" , error.message)
-        res.status(500).json({error : "Server Error" , error : error.message})
+        console.error("Error in analytics route:", error.message);
+        res.status(500).json({ error: "Server Error", message: error.message });
     }
 });
+
 
 export default router;
