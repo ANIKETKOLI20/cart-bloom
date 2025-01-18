@@ -1,25 +1,23 @@
 import toast from "react-hot-toast";
 import { ShoppingCart } from "lucide-react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 
 const ProductCard = ({ product }) => {
   const { data: authUser } = useQuery({ queryKey: ["authUser"] });
   const queryClient = useQueryClient();
 
-  const { mutate: addToCart, isPending, isError, error } = useMutation({
+  const { mutate: addToCart, isLoading: isPending, isError, error } = useMutation({
     mutationFn: async (product) => {
-      const res = await axios.post("/api/cart", product, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      if (res.status !== 200) throw new Error(res.data.error || "Failed to add cart");
+      const res = await axios.post("/api/cart", { productId: product._id });
+      if (res.status !== 200) {
+        throw new Error(res.response?.data?.message || "Failed to add product to cart");
+      }
       return res.data;
     },
     onSuccess: () => {
       toast.success("Product added to cart!", { id: "cart-success" });
-      queryClient.invalidateQueries(["cartItems"]); // Refresh cart data
+      queryClient.invalidateQueries(["cartItems"]); // Refresh cart items query
     },
     onError: (err) => {
       toast.error(err.message || "Failed to add product to cart", { id: "cart-error" });
@@ -31,7 +29,7 @@ const ProductCard = ({ product }) => {
       toast.error("Please login to add products to cart", { id: "login-error" });
       return;
     }
-    addToCart(product);
+    addToCart(product); // Trigger mutation
   };
 
   return (
@@ -63,6 +61,7 @@ const ProductCard = ({ product }) => {
           <ShoppingCart size={22} className="mr-2" />
           {isPending ? "Adding..." : "Add to cart"}
         </button>
+        {isError && <p className="text-red-500 mt-2">{error.message}</p>}
       </div>
     </div>
   );

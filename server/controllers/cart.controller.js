@@ -23,24 +23,47 @@ export const getCartProducts = async (req, res) => {
 
 export const addToCart = async (req, res) => {
   try {
-    const { productId } = req.body; // we used req.body instead of req.params because we haven't passed id in the url of the route (router.get("/" , protectRoute , getCartProduct))
-    const user = req.user;
+    const { productId } = req.body;
 
-    const existingItem = user.cartItems.find((item) => item.id === productId);
-
-    if (existingItem) {
-      existingItem.quantity += 1;
-    } else {
-      user.cartItems.push(productId);
+    if (!productId) {
+      return res.status(400).json({ message: "Product ID is required" });
     }
 
+    // Ensure user is populated by `protectRoute` middleware
+    const user = req.user;
+    if (!user) {
+      return res.status(401).json({ message: "Unauthorized: User not found" });
+    }
+
+    // Check if product exists
+    const product = await Product.findById(productId);
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    // Check if product already exists in the user's cart
+    const existingItem = user.cartItems.find(
+      (item) => item.product.toString() === productId
+    );
+
+    if (existingItem) {
+      // If exists, increment quantity
+      existingItem.quantity += 1;
+    } else {
+      // If not, add new product to the cart
+      user.cartItems.push({ product: productId, quantity: 1 });
+    }
+
+    // Save user document
     await user.save();
-    res.json(user.cartItems);
+
+    res.status(200).json({ cartItems: user.cartItems });
   } catch (error) {
-    console.log("Error in addToCart Controller", error.message);
-    res.status(500).json({ error: "Server Error", error: error.message });
+    console.error("Error in addToCart controller:", error.message);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
 
 export const removeAllFromCart = async (req, res) => {
   try {

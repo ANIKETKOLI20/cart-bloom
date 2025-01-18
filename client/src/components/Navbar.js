@@ -13,7 +13,7 @@ const Navbar = () => {
 	// Access user data
 	const user = authUser || null;
 	const isAdmin = user?.role === "admin";
-	const cart = user?.cart || [];
+	const cart = user?.cartItems || [];
 
 	const { mutate : logout } = useMutation({
 		mutationFn : async () => {
