@@ -17,7 +17,7 @@ const ProductsList = () => {
   });
 
   // Mutation for toggling the featured product
-  const { mutateAsync: featuredProduct, isLoading: isToggling } = useMutation({
+  const { mutate: featuredProduct, isLoading: isToggling } = useMutation({
     mutationFn: async (productId) => {
       const res = await axios.patch(`/api/product/${productId}`);
       if (res.status !== 200) throw new Error(res.data.error || "Failed to toggle featured product");
@@ -29,7 +29,7 @@ const ProductsList = () => {
   });
 
   // Mutation for removing a product
-  const { mutateAsync: remove, isLoading: isRemoving } = useMutation({
+  const { mutate: remove, isLoading: isRemoving } = useMutation({
     mutationFn: async (productId) => {
       const res = await axios.delete(`/api/product/${productId}`);
       if (res.status !== 200) throw new Error(res.data.error || "Failed to delete product");

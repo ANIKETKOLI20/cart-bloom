@@ -1,5 +1,5 @@
 import { BarChart, PlusCircle, ShoppingBasket } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 
 import CreateProductForm from "../components/CreateProductForm";

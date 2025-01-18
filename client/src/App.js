@@ -5,6 +5,7 @@ import SignUpPage from "./pages/SignUpPage.js";
 import LoginPage from "./pages/LoginPage.js";
 import LoadingSpinner from './components/LoadingSpinner.js';
 import AdminPage from "./pages/AdminPage.js";
+import CategoryPage from "./pages/CategoryPage.js";
 import NotFoundPage from './pages/NotFoundPage.js';
 
 import CustomCursor from "./components/CustomCursor";
@@ -13,6 +14,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Toaster } from "react-hot-toast";
 import axios from "axios";
 import Navbar from "./components/Navbar.js";
+
 
 
 function App() {
@@ -56,6 +58,7 @@ function App() {
           <Route path="/signup" element={!authUser ? <SignUpPage /> : <Navigate to="/" />} />
           <Route path="/login" element={!authUser ? <LoginPage /> : <Navigate to="/" />} />
           <Route path="/secret-dashboard" element={authUser?.role === "admin" ? <AdminPage /> : <Navigate to="/login" />} />
+          <Route path="/category/:category" element={<CategoryPage/>} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </div>
