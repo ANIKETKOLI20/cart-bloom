@@ -1,26 +1,31 @@
 import Product from "../models/product.model.js";
+import User from "../models/user.model.js";
 
 export const getCartProducts = async (req, res) => {
   try {
-    const products = await Product.find({ _id: { $in: req.user.cartItems } }); // Fetches all products that match the IDs in the user's cart.
+    // Log to check req.user.cartItems
+    console.log('Cart Items:', req.user.cartItems);
 
-    // add quantity for each product
-    const cartItems = products.map((product) => {
-      const item = req.user.cartItems.find(
-        (cartItems) => cartItems.id === product.id
-      );
-      return { ...product.toJSON(), quantity: item.quantity }; // The toJSON() method in Mongoose is used to convert a Mongoose document into a plain JavaScript object.
-      // This plain object contains only the raw data from the database, excluding additional Mongoose-specific properties and methods.
-      
+    // Fetch the products from the database based on the cart items IDs
+    const products = await Product.find({
+      _id: { $in: req.user.cartItems.map((item) => item.product) }, // Correct the reference to product._id
     });
 
-    res.json(user.cartItems);
+    // Add quantity for each product based on cartItems
+    const cartItems = products.map((product) => {
+      const item = req.user.cartItems.find(
+        (cartItem) => cartItem.product.toString() === product._id.toString() // Compare the product ID correctly
+      );
+      return { ...product.toJSON(), quantity: item.quantity }; // Add quantity to product data
+    });
+
+    // Send the cartItems array as the response
+    res.json(cartItems);
   } catch (error) {
-    console.log("Error in getCartProducts Controller", error.message);
-    res.status(500).json({ error: "Server Error", error: error.message });
+    console.error("Error in getCartProducts Controller", error); 
+    res.status(500).json({ error: "Server Error", details: error.message });
   }
 };
-
 export const addToCart = async (req, res) => {
   try {
     const { productId } = req.body;
@@ -86,28 +91,49 @@ export const removeAllFromCart = async (req, res) => {
 
 export const updateProductQuantity = async (req, res) => {
   try {
-    const { id: productId } = req.params; // here we used req.paramas instead of req.body because in route url we used /:id unlike addToCart router.put("/:id" , protectRoute , updateProductQuantity)
-    const quantity = req.body;
-    const user = req.body;
+    const { id: productId } = req.params; // Product ID from URL params
+    const { quantity } = req.body; // Quantity from request body
 
-    const existingItem = user.cartItems.find((item) => item.id === productId);
+    // Find the user based on the authentication middleware logic
+    const user = await User.findById(req.user.id); // Replace with actual user retrieval logic
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Ensure cartItems is defined
+    if (!user.cartItems || user.cartItems.length === 0) {
+      return res.status(400).json({ error: "Cart is empty or not initialized" });
+    }
+
+    // Find the product in the user's cart
+    const existingItem = user.cartItems.find(
+      (item) => item.product.toString() === productId // Ensure ID match
+    );
 
     if (existingItem) {
       if (quantity === 0) {
-        // client requested to remove the product from the cart
-        user.cartItems = user.cartItems.filter((item) => item.id !== productId);
-        await user.save();
-        return res.json(user.cartItems);
+        // Remove the product from the cart if quantity is set to 0
+        user.cartItems = user.cartItems.filter(
+          (item) => item.product.toString() !== productId
+        );
+      } else {
+        existingItem.quantity = quantity; // Update the quantity
       }
 
-      existingItem.quantity = quantity;
+      // Save the updated user document
       await user.save();
-      res.json(user.cartItems);
+
+      return res.json({ success: true, cartItems: user.cartItems });
     } else {
-      res.status(404).json({ error: "Product not found" });
+      return res.status(404).json({ error: "Product not found in cart" });
     }
   } catch (error) {
-    console.log("Error in updateProductQuantity Controller", error.message);
-    res.status(500).json({ error: "Server Error", error: error.message });
+    console.error("Error in updateProductQuantity Controller:", error.message);
+    return res
+      .status(500)
+      .json({ error: "Server Error", message: error.message });
   }
 };
+
+
